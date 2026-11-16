@@ -9,22 +9,44 @@ COPTS = [
     "-Wno-unused-parameter",
 ]
 
+# Explicit lists avoid glob + package-root lookup problems that cause
+# "undeclared inclusion" errors in this tree.
+LIBFDT_HDRS = [
+    "libfdt/fdt.h",
+    "libfdt/libacpi.h",
+    "libfdt/libfdt.h",
+    "libfdt/libfdt_env.h",
+    "libfdt/libfdt_internal.h",
+]
+
 cc_library(
     name = "libfdt",
-    srcs = glob([
-        "libfdt/*.h",
-        "libfdt/*.c",
-    ]),
-    copts = COPTS,
+    srcs = [
+        "libfdt/acpi.c",
+        "libfdt/fdt.c",
+        "libfdt/fdt_addresses.c",
+        "libfdt/fdt_check.c",
+        "libfdt/fdt_empty_tree.c",
+        "libfdt/fdt_overlay.c",
+        "libfdt/fdt_ro.c",
+        "libfdt/fdt_rw.c",
+        "libfdt/fdt_strerror.c",
+        "libfdt/fdt_sw.c",
+        "libfdt/fdt_wip.c",
+    ] + LIBFDT_HDRS,
+    hdrs = LIBFDT_HDRS,
+    textual_hdrs = LIBFDT_HDRS,
+    copts = COPTS + ["-Iexternal/dtc/libfdt"],
     includes = ["libfdt"],
+    visibility = ["//visibility:public"],
 )
 
 genrule(
     name = "dtc_lexer_srcs",
     srcs = ["dtc-lexer.l"],
     outs = ["dtc-lexer.lex.c"],
-    cmd = "export PATH= ; $(execpath @kleaf//build/kernel/kleaf/bootstrap_hermetic_tools:flex) -o $@ $<",
-    tools = ["@kleaf//build/kernel/kleaf/bootstrap_hermetic_tools:flex"],
+    cmd = "$(location //prebuilts/build-tools:flex) -o $@ $<",
+    tools = ["//prebuilts/build-tools:flex"],
 )
 
 genrule(
@@ -34,16 +56,14 @@ genrule(
         "dtc-parser.c",
         "dtc-parser.h",
     ],
-    cmd = "export PATH= ; $(execpath @kleaf//build/kernel/kleaf/bootstrap_hermetic_tools:bison) -d -o $(location dtc-parser.c) $(location dtc-parser.y)",
+    cmd = "$(location //prebuilts/build-tools:bison) -d -o $(location dtc-parser.c) $(location dtc-parser.y)",
     tools = [
-        "@kleaf//build/kernel/kleaf/bootstrap_hermetic_tools:bison",
+        "//prebuilts/build-tools:bison",
     ],
 )
 
 UTILS = [
     "util.c",
-    "util.h",
-    ":version_gen_header",
 ]
 
 # Rely on the check in Android.bp and build tests to catch any change in the
@@ -60,18 +80,35 @@ genrule(
     """,
 )
 
+cc_library(
+    name = "util_hdrs",
+    hdrs = [
+        "util.h",
+        ":version_gen_header",
+    ],
+    includes = ["."],
+)
+
+cc_library(
+    name = "dtc_hdrs",
+    hdrs = [
+        "dtc.h",
+        "srcpos.h",
+        ":dtc_parser_srcs",
+    ],
+    includes = ["."],
+)
+
 cc_binary(
     name = "dtc",
     srcs = UTILS + [
         "checks.c",
         "data.c",
         "dtc.c",
-        "dtc.h",
         "flattree.c",
         "fstree.c",
         "livetree.c",
         "srcpos.c",
-        "srcpos.h",
         "treesource.c",
         ":dtc_lexer_srcs",
         ":dtc_parser_srcs",
@@ -82,7 +119,11 @@ cc_binary(
         "@kleaf//build/kernel:__subpackages__",
         "//vendor:__subpackages__",
     ],
-    deps = [":libfdt"],
+    deps = [
+        ":dtc_hdrs",
+        ":libfdt",
+        ":util_hdrs",
+    ],
 )
 
 cc_binary(
@@ -96,7 +137,10 @@ cc_binary(
         "@kleaf//build/kernel:__subpackages__",
         "//vendor:__subpackages__",
     ],
-    deps = [":libfdt"],
+    deps = [
+        ":libfdt",
+        ":util_hdrs",
+    ],
 )
 
 cc_binary(
@@ -110,7 +154,10 @@ cc_binary(
         "@kleaf//build/kernel:__subpackages__",
         "//vendor:__subpackages__",
     ],
-    deps = [":libfdt"],
+    deps = [
+        ":libfdt",
+        ":util_hdrs",
+    ],
 )
 
 cc_binary(
@@ -120,7 +167,10 @@ cc_binary(
     ],
     copts = COPTS,
     defines = ["NO_YAML"],
-    deps = [":libfdt"],
+    deps = [
+        ":libfdt",
+        ":util_hdrs",
+    ],
 )
 
 cc_binary(
@@ -134,5 +184,8 @@ cc_binary(
         "@kleaf//build/kernel:__subpackages__",
         "//vendor:__subpackages__",
     ],
-    deps = [":libfdt"],
+    deps = [
+        ":libfdt",
+        ":util_hdrs",
+    ],
 )
