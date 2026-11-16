@@ -87,6 +87,7 @@ cc_binary(
     defines = ["NO_YAML"],
     visibility = [
         "@kleaf//build/kernel:__subpackages__",
+        "//vendor:__subpackages__",
     ],
     deps = [":libfdt"],
 )
@@ -98,6 +99,10 @@ cc_binary(
     ],
     copts = COPTS,
     defines = ["NO_YAML"],
+    visibility = [
+        "@kleaf//build/kernel:__subpackages__",
+        "//vendor:__subpackages__",
+    ],
     deps = [":libfdt"],
 )
 
@@ -108,6 +113,10 @@ cc_binary(
     ],
     copts = COPTS,
     defines = ["NO_YAML"],
+    visibility = [
+        "@kleaf//build/kernel:__subpackages__",
+        "//vendor:__subpackages__",
+    ],
     deps = [":libfdt"],
 )
 
@@ -130,6 +139,7 @@ cc_binary(
     defines = ["NO_YAML"],
     visibility = [
         "@kleaf//build/kernel:__subpackages__",
+        "//vendor:__subpackages__",
     ],
     deps = [":libfdt"],
 )
